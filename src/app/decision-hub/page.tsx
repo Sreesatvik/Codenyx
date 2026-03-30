@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import DecisionHubCanvas from "@/components/canvas/DecisionHubCanvas";
+import FinalDashboard from "@/components/dashboard/FinalDashboard";
 import { useSimulationStore } from "@/store/simulationStore";
 import gsap from "gsap";
 
@@ -73,15 +74,52 @@ const APPROACHES = [
     border: "border-amber-500/40",
     hover: "hover:border-amber-400",
   },
+  {
+    id: "stakeholder",
+    emoji: "🗣️",
+    label: "Stakeholder Meeting",
+    description: "Negotiate with key actors",
+    action: "Hold a stakeholder negotiation meeting to align investor expectations, community demands, and operational capacity",
+    cost: "~$50–100",
+    color: "from-teal-600 to-teal-800",
+    border: "border-teal-500/40",
+    hover: "hover:border-teal-400",
+  },
+  {
+    id: "crisis",
+    emoji: "🚨",
+    label: "Crisis Response",
+    description: "Address an emergency",
+    action: "Deploy an emergency crisis response plan — address a critical issue threatening the venture's operations or reputation",
+    cost: "~$200–500",
+    color: "from-red-600 to-red-800",
+    border: "border-red-500/40",
+    hover: "hover:border-red-400",
+  },
+  {
+    id: "compliance",
+    emoji: "📋",
+    label: "Regulatory Compliance",
+    description: "Meet legal requirements",
+    action: "Invest in regulatory compliance, legal documentation, and government reporting requirements",
+    cost: "~$100–300",
+    color: "from-slate-500 to-slate-700",
+    border: "border-slate-400/40",
+    hover: "hover:border-slate-300",
+  },
 ];
 
 // ---- Main Page ----
 export default function DecisionHub() {
   const {
     budget, metrics, turn, context,
-    narrativeHistory, isEvaluating,
-    runSimulationTurn, resetSimulation,
+    narrativeHistory, isEvaluating, isGameOver,
+    runSimulationTurn, resetSimulation, loadFromDatabase,
   } = useSimulationStore();
+
+  useEffect(() => {
+    loadFromDatabase();
+  }, [loadFromDatabase]);
 
   const [actionInput, setActionInput] = useState("");
   const [activeApproach, setActiveApproach] = useState<string | null>(null);
@@ -188,10 +226,16 @@ export default function DecisionHub() {
         </aside>
 
         {/* Right: Canvas + Controls */}
-        <main className="flex-1 flex flex-col p-5 gap-4 overflow-y-auto">
+        <main className="flex-1 flex flex-col p-5 gap-4 overflow-y-auto relative">
 
-          {/* PixiJS Canvas (Dev 4) */}
-          <DecisionHubCanvas />
+          {isGameOver ? (
+            <div className="absolute inset-0 p-5 bg-slate-950 z-10 flex flex-col">
+              <FinalDashboard />
+            </div>
+          ) : (
+            <>
+              {/* PixiJS Canvas (Dev 4) */}
+              <DecisionHubCanvas />
 
           {/* AI Narrative Box */}
           <div className={`bg-slate-900/60 border rounded-xl p-4 transition-all duration-300 ${isEvaluating ? 'border-emerald-500/60 animate-pulse' : 'border-slate-800'}`}>
@@ -206,7 +250,7 @@ export default function DecisionHub() {
           {/* ── Approach Logos (Dev 3) ── */}
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
             <p className="text-xs text-slate-500 uppercase tracking-widest mb-3 font-semibold">Strategic Approaches</p>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+            <div className="grid grid-cols-3 gap-3">
               {APPROACHES.map((approach) => (
                 <button
                   key={approach.id}
@@ -246,6 +290,8 @@ export default function DecisionHub() {
               {isEvaluating ? "Evaluating..." : "Execute →"}
             </button>
           </form>
+          </>
+          )}
         </main>
       </div>
     </div>

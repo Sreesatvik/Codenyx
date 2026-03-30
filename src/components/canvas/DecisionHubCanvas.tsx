@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSimulationStore } from "@/store/simulationStore";
 import { MapNode } from "@/lib/contracts/types";
 
@@ -33,6 +33,8 @@ function nodeColor(type: MapNode["type"]): number {
 export default function DecisionHubCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<import("pixi.js").Application | null>(null);
+  const pixiRef = useRef<typeof import("pixi.js") | null>(null);
+  const [isReady, setIsReady] = useState(false);
   const mapNodes = useSimulationStore((state) => state.mapNodes);
 
   // Phase 1: Initialize PixiJS once
@@ -41,10 +43,11 @@ export default function DecisionHubCanvas() {
     let mounted = true;
 
     (async () => {
-      const { Application } = await import("pixi.js");
+      const PIXI = await import("pixi.js");
       if (!mounted || appRef.current) return;
+      pixiRef.current = PIXI;
 
-      const app = new Application();
+      const app = new PIXI.Application();
       await app.init({
         width: canvasRef.current!.clientWidth || 800,
         height: 340,
@@ -59,6 +62,7 @@ export default function DecisionHubCanvas() {
 
       canvasRef.current!.appendChild(app.canvas);
       appRef.current = app;
+      setIsReady(true);
     })();
 
     return () => {
@@ -72,12 +76,14 @@ export default function DecisionHubCanvas() {
 
   // Phase 2: Re-render tiles whenever mapNodes changes
   useEffect(() => {
+    if (!isReady || !appRef.current || !pixiRef.current) return;
     const app = appRef.current;
-    if (!app) return;
+    const { Graphics, Text, TextStyle, Container } = pixiRef.current;
 
-    const { Graphics, Text, TextStyle } = require("pixi.js");
-
-    app.stage.removeChildren();
+    const oldChildren = app.stage.removeChildren();
+    for (const child of oldChildren) {
+      child.destroy({ children: true });
+    }
 
     const offsetX = (app.screen.width / 2);
     const offsetY = 60;
@@ -103,44 +109,110 @@ export default function DecisionHubCanvas() {
         tile.fill({ color: fillColor, alpha });
         tile.stroke({ color: borderColor, width: 1, alpha: 0.8 });
 
-        // Draw top face for occupied nodes (3D effect)
+        // Always add the base tile to the stage
+        app.stage.addChild(tile);
+
+        // Draw 3D Building based on Type and Status
         if (node && node.type !== "EMPTY") {
-          const top = new Graphics();
-          const h = 24; // building height
-          top.poly([
+          const buildingContainer = new Container();
+          buildingContainer.eventMode = "static";
+          buildingContainer.cursor = "pointer";
+
+          let h = 24;
+          if (node.type === "HQ") h = 36;
+          else if (node.type === "MARKETING_BILLBOARD") h = 42;
+          else if (node.type === "RESEARCH_LAB") h = 28;
+          else if (node.type === "COMMUNITY_CENTER") h = 16;
+          else if (node.type === "PRODUCTION_FACILITY") h = 20;
+
+          // Status Visual Modifiers
+          const isDamaged = node.status === "DAMAGED";
+          const isUpgrading = node.status === "UPGRADING";
+          const isInactive = node.status === "INACTIVE";
+
+          const faceAlpha = isInactive ? 0.3 : (isUpgrading ? 0.6 : 0.9);
+          const roofColor = isDamaged ? 0xff4444 : Math.min(0xffffff, fillColor + 0x222222);
+          const rightFaceColor = Math.max(0, fillColor - 0x222222);
+          const leftFaceColor = Math.max(0, fillColor - 0x444444);
+
+          // Roof
+          const roof = new Graphics();
+          roof.poly([
             x, y - h,
             x + TILE_W / 2, y + TILE_H / 2 - h,
-            x + TILE_W / 2, y + TILE_H / 2,
-            x, y,
+            x, y + TILE_H - h,
+            x - TILE_W / 2, y + TILE_H / 2 - h,
           ]);
-          const faceColor = Math.max(0, fillColor - 0x222222);
-          top.fill({ color: faceColor, alpha: 0.9 });
-          top.stroke({ color: borderColor, width: 1 });
-          app.stage.addChild(top);
+          roof.fill({ color: roofColor, alpha: faceAlpha });
+          roof.stroke({ color: isDamaged ? 0xff0000 : borderColor, width: 1 });
+          buildingContainer.addChild(roof);
 
-          const right = new Graphics();
-          right.poly([
-            x, y - h,
+          // Right Wall
+          const rightWall = new Graphics();
+          rightWall.poly([
+            x, y + TILE_H - h,
+            x + TILE_W / 2, y + TILE_H / 2 - h,
+            x + TILE_W / 2, y + TILE_H / 2,
+            x, y + TILE_H,
+          ]);
+          rightWall.fill({ color: rightFaceColor, alpha: faceAlpha });
+          rightWall.stroke({ color: isDamaged ? 0xcc0000 : borderColor, width: 1 });
+          buildingContainer.addChild(rightWall);
+
+          // Left Wall
+          const leftWall = new Graphics();
+          leftWall.poly([
+            x, y + TILE_H - h,
             x - TILE_W / 2, y + TILE_H / 2 - h,
             x - TILE_W / 2, y + TILE_H / 2,
-            x, y,
+            x, y + TILE_H,
           ]);
-          right.fill({ color: Math.max(0, fillColor - 0x444444), alpha: 0.9 });
-          right.stroke({ color: borderColor, width: 1 });
-          app.stage.addChild(right);
+          leftWall.fill({ color: leftFaceColor, alpha: faceAlpha });
+          leftWall.stroke({ color: isDamaged ? 0xaa0000 : borderColor, width: 1 });
+          buildingContainer.addChild(leftWall);
+
+          // Draw Scaffolding if UPGRADING
+          if (isUpgrading) {
+            const scaffold = new Graphics();
+            scaffold.poly([x, y - h - 10, x + 5, y - h - 10, x + 5, y, x, y]);
+            scaffold.fill({ color: 0xf59e0b, alpha: 0.8 }); 
+            buildingContainer.addChild(scaffold);
+          }
 
           // Label
+          const labelText = isDamaged ? "DAMAGED" : (isUpgrading ? "BUILDING" : node.type.replace(/_/g, "\n").substring(0, 8));
           const label = new Text({
-            text: node.type.replace(/_/g, "\n").substring(0, 8),
+            text: labelText,
             style: new TextStyle({ fontSize: 7, fill: 0xffffff, align: "center", fontFamily: "monospace" }),
           });
           label.anchor.set(0.5);
           label.x = x;
-          label.y = y - h - 10;
-          app.stage.addChild(label);
-        }
+          label.y = y - h - 12;
+          buildingContainer.addChild(label);
 
-        app.stage.addChild(tile);
+          // Interaction animations
+          let hoverY = 0;
+          let isHovered = false;
+          buildingContainer.on("pointerover", () => {
+            isHovered = true;
+            roof.fill({ color: Math.min(0xffffff, roofColor + 0x222222), alpha: 1 });
+          });
+          buildingContainer.on("pointerout", () => {
+            isHovered = false;
+            roof.fill({ color: roofColor, alpha: faceAlpha });
+          });
+
+          // Ticker for smooth hovering interaction
+          const hoverTicker = () => {
+            const targetY = isHovered ? -5 : 0;
+            hoverY += (targetY - hoverY) * 0.15;
+            buildingContainer.y = hoverY;
+          };
+          app.ticker.add(hoverTicker);
+          buildingContainer.on("destroyed", () => app.ticker.remove(hoverTicker));
+
+          app.stage.addChild(buildingContainer);
+        }
       }
     }
 

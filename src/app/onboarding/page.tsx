@@ -65,9 +65,9 @@ export default function OnboardingPage() {
               onChange={(e) => setExperience(e.target.value as ExperienceLevel)}
               className="w-full bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-              <option value="BEGINNER">Beginner (High Support)</option>
-              <option value="INTERMEDIATE">Intermediate (Standard)</option>
-              <option value="EXPERT">Expert (High Risk/Unforgiving)</option>
+              <option value="BEGINNER">Explorer (Little real-world exposure)</option>
+              <option value="INTERMEDIATE">Experimenter (Has attempted ventures)</option>
+              <option value="EXPERT">Struggler (Operating but facing challenges)</option>
             </select>
           </div>
 
