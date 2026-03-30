@@ -1,20 +1,25 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
 import { useState } from "react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Dev 1: Strict Google OAuth Execution
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    // Mocking an auth delay
-    setTimeout(() => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/onboarding`,
+      },
+    });
+    if (error) {
+      console.error(error);
       setLoading(false);
-      router.push("/onboarding");
-    }, 1500);
+    }
+    // Execution pauses here as the window natively redirects out to Google
   };
 
   return (
@@ -23,33 +28,13 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold mb-2 text-center text-emerald-400">VentureSimulate</h1>
         <p className="text-slate-400 text-center mb-8">Executive Decision Intelligence</p>
         
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">Email Address</label>
-            <input 
-              type="email" 
-              required 
-              placeholder="executive@example.com"
-              className="w-full bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" 
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">Password</label>
-            <input 
-              type="password" 
-              required 
-              placeholder="••••••••"
-              className="w-full bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" 
-            />
-          </div>
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full mt-6 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-md transition-colors disabled:opacity-50 flex justify-center items-center"
-          >
-            {loading ? "Authenticating..." : "Secure Login"}
-          </button>
-        </form>
+        <button 
+          onClick={handleGoogleLogin}
+          disabled={loading}
+          className="w-full mt-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 px-4 rounded-md transition-colors disabled:opacity-50 flex justify-center items-center shadow-lg"
+        >
+          {loading ? "Connecting securely..." : "Continue with Google (OAuth)"}
+        </button>
       </div>
     </div>
   );

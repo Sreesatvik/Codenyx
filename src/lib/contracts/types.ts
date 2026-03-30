@@ -11,7 +11,9 @@ export type AIConsequenceResponse = z.infer<typeof schemas.AIConsequenceResponse
 
 export interface StoreState extends SimulationState {
   // Actions
+  isEvaluating: boolean;
   setContext: (context: SimulationContext) => void;
   applyConsequence: (consequence: AIConsequenceResponse) => void;
+  runSimulationTurn: (action: string) => Promise<void>;
   resetSimulation: () => void;
 }

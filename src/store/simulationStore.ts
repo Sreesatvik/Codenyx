@@ -2,8 +2,9 @@ import { create } from "zustand";
 import { StoreState, SimulationContext, AIConsequenceResponse, MapNode } from "../lib/contracts/types";
 import { InitialSimulationState } from "../lib/mock/MockData";
 
-export const useSimulationStore = create<StoreState>((set) => ({
+export const useSimulationStore = create<StoreState>((set, get) => ({
   ...InitialSimulationState,
+  isEvaluating: false,
 
   setContext: (context: SimulationContext) =>
     set(() => ({
@@ -55,5 +56,39 @@ export const useSimulationStore = create<StoreState>((set) => ({
       };
     }),
 
-  resetSimulation: () => set(() => ({ ...InitialSimulationState })),
+  runSimulationTurn: async (action: string) => {
+    set({ isEvaluating: true });
+    try {
+      // Package the entire current state object to seed the AI prompt
+      const stateObject = get();
+      
+      // Dev 1: Contact Gemini 1.5 Edge Route
+      const response = await fetch('/api/simulation/consequence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, state: stateObject })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Simulation API returned an error');
+      }
+      
+      // The API Route guarantees the response conforms to our AIConsequenceResponse schema
+      const payload: AIConsequenceResponse = await response.json();
+      
+      // Complete Handshake by invoking the synchronous math gatekeeper
+      get().applyConsequence(payload);
+
+    } catch (error) {
+      console.error("Simulation Turn Error:", error);
+      // Fallback: Notify user of error via narrative without losing state
+      set((state) => ({
+        narrativeHistory: [...state.narrativeHistory, "SYSTEM ERROR: The Consequence Engine failed to evaluate that particular action. Please try again or rephrase."]
+      }));
+    } finally {
+      set({ isEvaluating: false });
+    }
+  },
+
+  resetSimulation: () => set(() => ({ ...InitialSimulationState, isEvaluating: false })),
 }));
