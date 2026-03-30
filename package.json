@@ -2,18 +2,14 @@
   "name": "venture-simulate",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "test": "jest"
+    "lint": "eslint"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.53",
-    "@ai-sdk/groq": "^3.0.31",
-    "@ai-sdk/react": "^3.0.143",
     "@supabase/supabase-js": "^2.100.1",
     "ai": "^6.0.141",
     "clsx": "^2.1.1",
@@ -31,7 +27,6 @@
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
