@@ -1,16 +1,27 @@
 "use client";
 
 import { supabase } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // Dev 1: Strict Google OAuth Execution
   const handleGoogleLogin = async () => {
     setLoading(true);
+
+    // Dev bypass: if no real Supabase project is configured, skip OAuth
+    const isSupabaseConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL !== "";
+
+    if (!isSupabaseConfigured) {
+      router.push("/onboarding");
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
         redirectTo: `${window.location.origin}/onboarding`,
       },
@@ -19,7 +30,6 @@ export default function LoginPage() {
       console.error(error);
       setLoading(false);
     }
-    // Execution pauses here as the window natively redirects out to Google
   };
 
   return (
