@@ -1,9 +1,13 @@
 import { create } from "zustand";
-import { StoreState, SimulationContext, AIConsequenceResponse, MapNode } from "../lib/contracts/types";
+import { StoreState, SimulationContext, AIConsequenceResponse } from "../lib/contracts/types";
 import { InitialSimulationState } from "../lib/mock/MockData";
 
 export const useSimulationStore = create<StoreState>((set) => ({
   ...InitialSimulationState,
+
+  // ✅ ADD THESE (fixes your TypeScript errors)
+  finalReport: null,
+  isGeneratingReport: false,
 
   setContext: (context: SimulationContext) =>
     set(() => ({
@@ -15,13 +19,10 @@ export const useSimulationStore = create<StoreState>((set) => ({
 
   applyConsequence: (consequence: AIConsequenceResponse) =>
     set((state) => {
-      // 1. Math Shift logic for budget
       const newBudget = state.budget - consequence.budgetCost;
 
-      // Ensure metrics clamp between 0 and 100
       const clamp = (val: number) => Math.min(100, Math.max(0, val));
 
-      // 2. Math shift logic for metrics
       const newMetrics = {
         socialImpact: clamp(state.metrics.socialImpact + consequence.metricShifts.socialImpact),
         financialSustainability: clamp(state.metrics.financialSustainability + consequence.metricShifts.financialSustainability),
@@ -29,12 +30,10 @@ export const useSimulationStore = create<StoreState>((set) => ({
         stakeholderTrust: clamp(state.metrics.stakeholderTrust + consequence.metricShifts.stakeholderTrust),
       };
 
-      // 3. Update narrative
       const newHistory = [...state.narrativeHistory, consequence.narrative];
 
-      // 4. Update map nodes (add new, update existing)
       let finalNodes = [...state.mapNodes];
-      
+
       if (consequence.updatedNodes) {
         finalNodes = finalNodes.map(node => {
           const updated = consequence.updatedNodes?.find(un => un.id === node.id);
@@ -55,5 +54,17 @@ export const useSimulationStore = create<StoreState>((set) => ({
       };
     }),
 
-  resetSimulation: () => set(() => ({ ...InitialSimulationState })),
+  // ✅ OPTIONAL (good practice)
+  setGeneratingReport: (val: boolean) =>
+    set(() => ({ isGeneratingReport: val })),
+
+  setFinalReport: (report: any) =>
+    set(() => ({ finalReport: report })),
+
+  resetSimulation: () =>
+    set(() => ({
+      ...InitialSimulationState,
+      finalReport: null,
+      isGeneratingReport: false,
+    })),
 }));
