@@ -1,0 +1,48 @@
+import { z } from "zod";
+
+// Core Metrics
+export const MetricsSchema = z.object({
+  socialImpact: z.number().min(0).max(100),
+  financialSustainability: z.number().min(0).max(100),
+  riskExposure: z.number().min(0).max(100),
+  stakeholderTrust: z.number().min(0).max(100),
+});
+
+// A single map node to be rendered by PixiJS
+export const MapNodeSchema = z.object({
+  id: z.string(),
+  x: z.number(), // Isometric grid X
+  y: z.number(), // Isometric grid Y
+  type: z.enum(["HQ", "COMMUNITY_CENTER", "RESEARCH_LAB", "MARKETING_BILLBOARD", "PRODUCTION_FACILITY", "EMPTY"]),
+  status: z.enum(["ACTIVE", "INACTIVE", "DAMAGED", "UPGRADING"]),
+});
+
+export const SimulationContextSchema = z.object({
+  domain: z.string(),
+  purpose: z.string(),
+  experienceLevel: z.enum(["BEGINNER", "INTERMEDIATE", "EXPERT"]),
+});
+
+export const SimulationStateSchema = z.object({
+  budget: z.number(),
+  metrics: MetricsSchema,
+  turn: z.number(),
+  context: SimulationContextSchema.nullable(),
+  mapNodes: z.array(MapNodeSchema),
+  narrativeHistory: z.array(z.string()),
+});
+
+// AI Response validation (F1-F3 Loop)
+export const AIConsequenceResponseSchema = z.object({
+  narrative: z.string().describe("Narrative explaining the consequence of the user's action"),
+  budgetCost: z.number().describe("Budget deducted/added for the action"),
+  metricShifts: z.object({
+    socialImpact: z.number(),
+    financialSustainability: z.number(),
+    riskExposure: z.number(),
+    stakeholderTrust: z.number(),
+  }).describe("-100 to +100 shift per metric"),
+  newNodes: z.array(MapNodeSchema).optional().describe("Any new structures added to the map"),
+  updatedNodes: z.array(MapNodeSchema).optional().describe("Any existing map node state changes"),
+  isGameEnding: z.boolean().describe("Whether this consequence triggered a game over or win condition"),
+});
