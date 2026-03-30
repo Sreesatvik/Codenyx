@@ -76,19 +76,22 @@ ${crisisInstruction}
 3. **Budget Costs**: Must be realistic relative to the action. Building costs $200-800. Marketing costs $150-400. Community outreach costs $100-300. R&D costs $300-600. Government applications cost $50-200 but introduce delays.
 
 4. **Metric Shifts**: Each shift must be between -20 and +20. Most shifts should be in the -10 to +15 range. Extreme values (±15 to ±20) should be rare and well-justified.
+ 
+5. **Revenue Generation**: Social ventures generate revenue through fees, product sales, secondary service outcomes, or grants. Revenue should realistically scale with Turn number. Early revenue is small ($0-100), later revenue can be ($200-800).
+ 
+6. **Risk Exposure**: Increases when: taking on debt, expanding too fast, entering new markets, ignoring compliance. Decreases when: diversifying revenue, building partnerships, securing insurance, conducting due diligence.
 
-5. **Risk Exposure**: Increases when: taking on debt, expanding too fast, entering new markets, ignoring compliance. Decreases when: diversifying revenue, building partnerships, securing insurance, conducting due diligence.
+7. **newNodes**: When the action involves building physical infrastructure or establishing a new operational area, include a newNode. Choose from: HQ, COMMUNITY_CENTER, RESEARCH_LAB, MARKETING_BILLBOARD, PRODUCTION_FACILITY. Give it unique grid coordinates (x: 0-8, y: 0-5) that don't overlap with existing nodes. Status should be ACTIVE or UPGRADING.
 
-6. **newNodes**: When the action involves building physical infrastructure or establishing a new operational area, include a newNode. Choose from: HQ, COMMUNITY_CENTER, RESEARCH_LAB, MARKETING_BILLBOARD, PRODUCTION_FACILITY. Give it unique grid coordinates (x: 0-8, y: 0-5) that don't overlap with existing nodes. Status should be ACTIVE or UPGRADING.
+8. **Map Node Management**: Current nodes are at: ${(state.mapNodes || []).map((n: any) => `(${n.x},${n.y})`).join(', ')}. Do NOT place new nodes at these coordinates. If the action damages or upgrades existing infrastructure, use updatedNodes to change a node's status.
 
-7. **Map Node Management**: Current nodes are at: ${(state.mapNodes || []).map((n: any) => `(${n.x},${n.y})`).join(', ')}. Do NOT place new nodes at these coordinates. If the action damages or upgrades existing infrastructure, use updatedNodes to change a node's status.
-
-8. **isGameEnding**: Only true if the budget would realistically drop to $0 or below from this action, or if the venture faces an irrecoverable crisis.
+9. **isGameEnding**: Only true if the budget would realistically drop to $0 or below from this action, or if the venture faces an irrecoverable crisis.
 
 ## REQUIRED JSON FORMAT
 {
   "narrative": "2-4 sentence consequence description. Must reference a stakeholder reaction. Be specific about what happened, not generic.",
   "budgetCost": 300,
+  "revenue": 50,
   "metricShifts": {
     "socialImpact": 10,
     "financialSustainability": -5,
@@ -120,22 +123,27 @@ Respond with ONLY the JSON. No other text.`;
       return NextResponse.json({ error: "AI returned malformed JSON", raw: cleaned }, { status: 500 });
     }
 
+    const VALID_TYPES = ["HQ", "COMMUNITY_CENTER", "RESEARCH_LAB", "MARKETING_BILLBOARD", "PRODUCTION_FACILITY", "EMPTY"];
+    
     // Sanitize newNodes/updatedNodes — the LLM often omits required fields like id/status
     if (Array.isArray(parsed.newNodes)) {
       parsed.newNodes = parsed.newNodes.map((node: any, i: number) => ({
         id: node.id || `node-${Date.now()}-${i}`,
         x: typeof node.x === "number" ? node.x : i + 1,
         y: typeof node.y === "number" ? node.y : i + 1,
-        type: node.type || "COMMUNITY_CENTER",
+        type: (node.type && VALID_TYPES.includes(node.type)) ? node.type : "COMMUNITY_CENTER",
         status: node.status || "ACTIVE",
       }));
     }
+    // Ensure revenue exists
+    if (parsed.revenue === undefined) parsed.revenue = 0;
+ 
     if (Array.isArray(parsed.updatedNodes)) {
       parsed.updatedNodes = parsed.updatedNodes.map((node: any, i: number) => ({
         id: node.id || `node-upd-${Date.now()}-${i}`,
         x: typeof node.x === "number" ? node.x : 0,
         y: typeof node.y === "number" ? node.y : 0,
-        type: node.type || "HQ",
+        type: (node.type && VALID_TYPES.includes(node.type)) ? node.type : "HQ",
         status: node.status || "ACTIVE",
       }));
     }
