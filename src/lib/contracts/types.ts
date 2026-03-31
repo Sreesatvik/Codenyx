@@ -15,6 +15,8 @@ export interface StoreState extends SimulationState {
   isGameOver: boolean;
   isGeneratingReport: boolean;
   finalReport: string | null;
+  decisionHistory: { title: string; turn: number }[];
+  user: { id: string; email: string } | null;
   setInitialBudget: (amount: number) => void;
   setContext: (context: SimulationContext) => void;
   applyConsequence: (consequence: AIConsequenceResponse) => void;
@@ -23,4 +25,5 @@ export interface StoreState extends SimulationState {
   syncToDatabase: () => Promise<void>;
   resetSimulation: () => void;
   endSimulation: () => Promise<void>;
+  setUser: (user: { id: string; email: string } | null) => void;
 }

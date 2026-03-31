@@ -5,6 +5,8 @@ import AnimatedMap from "@/components/canvas/AnimatedMap";
 import FinalDashboard from "@/components/dashboard/FinalDashboard";
 import SidebarHistory from "@/components/layout/SidebarHistory";
 import { useSimulationStore } from "@/store/simulationStore";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 import gsap from "gsap";
 
 // --- Strategic Approaches (Strategic Approaches) ---
@@ -115,12 +117,28 @@ export default function DecisionHub() {
   const {
     budget, metrics, turn, context, mapNodes, avatarPos,
     narrativeHistory, isEvaluating, isGameOver, lastTransaction,
-    runSimulationTurn, loadFromDatabase,
+    runSimulationTurn, loadFromDatabase, setUser, user
   } = useSimulationStore();
 
+  const supabase = createClient();
+  const router = useRouter();
+
   useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser({ id: data.user.id, email: data.user.email! });
+      }
+    };
+    checkSession();
     loadFromDatabase();
-  }, [loadFromDatabase]);
+  }, [loadFromDatabase, setUser]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/login");
+  };
 
   const [actionInput, setActionInput] = useState("");
   const [activeApproach, setActiveApproach] = useState<string | null>(null);
@@ -215,6 +233,23 @@ export default function DecisionHub() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* User Profile & Logout */}
+          <div className="flex items-center gap-4 pl-10 border-l border-slate-800/80">
+            <div className="text-right hidden sm:block">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">Authenticated as</p>
+              <p className="text-xs font-semibold text-slate-200">{user?.email || "Strategist"}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-red-500/10 border border-slate-700 hover:border-red-500/30 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all active:scale-95 group"
+              title="Logout"
+            >
+              <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
           </div>
         </header>
 

@@ -22,6 +22,9 @@ export const useSimulationStore = create<StoreState>()(
       isGameOver: false,
       isGeneratingReport: false,
       finalReport: null,
+      user: null,
+
+      setUser: (user: { id: string; email: string } | null) => set({ user }),
 
       setInitialBudget: (amount: number) => set({ budget: amount }),
       
@@ -179,6 +182,7 @@ export const useSimulationStore = create<StoreState>()(
         avatarPos: state.avatarPos,
         narrativeHistory: state.narrativeHistory,
         decisionHistory: state.decisionHistory,
+        user: state.user,
       }),
     }
   )
