@@ -95,6 +95,7 @@ export const useSimulationStore = create<StoreState>()(
             mapNodes: finalNodes,
             avatarPos: consequence.avatarPos || freshAvatar,
             turn: nextTurn,
+            decisionHistory: [...state.decisionHistory, { title: consequence.shortTitle, turn: nextTurn - 1 }],
             isGameOver: consequence.isGameEnding || nextTurn >= 8 || rawBudget <= 0,
           };
         }),
@@ -177,6 +178,7 @@ export const useSimulationStore = create<StoreState>()(
         mapNodes: state.mapNodes,
         avatarPos: state.avatarPos,
         narrativeHistory: state.narrativeHistory,
+        decisionHistory: state.decisionHistory,
       }),
     }
   )

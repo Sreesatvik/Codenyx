@@ -23,11 +23,13 @@ export const InitialSimulationState: SimulationState = {
   lastTransaction: { cost: 0, revenue: 0, net: 0 },
   narrativeHistory: [
     "Welcome to VentureSimulate. Establish your domain and purpose to begin the scenario."
-  ]
+  ],
+  decisionHistory: [],
 };
 
 export const MockAIConsequence: AIConsequenceResponse = {
   narrative: "You launched a community survey. Stakeholders appreciate the transparency, but it cost you some initial capital.",
+  shortTitle: "Initial Survey Launched",
   budgetCost: 200,
   revenue: 50,
   metricShifts: {

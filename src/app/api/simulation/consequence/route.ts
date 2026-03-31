@@ -90,6 +90,7 @@ ${crisisInstruction}
 ## REQUIRED JSON FORMAT
 {
   "narrative": "2-4 sentence consequence description. Must reference a stakeholder reaction. Be specific about what happened, not generic.",
+  "shortTitle": "2-4 word title of the outcome (e.g. 'Lab Built', 'Market Expansion')",
   "budgetCost": 300,
   "revenue": 50,
   "metricShifts": {
@@ -106,7 +107,7 @@ ${crisisInstruction}
 Respond with ONLY the JSON. No other text.`;
 
     const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
+      model: groq("llama-3.1-8b-instant"),
       system: systemPrompt,
       prompt: `User's strategic decision: "${action}"`,
     });
@@ -137,6 +138,8 @@ Respond with ONLY the JSON. No other text.`;
     }
     // Ensure revenue exists
     if (parsed.revenue === undefined) parsed.revenue = 0;
+    // Ensure shortTitle exists
+    if (!parsed.shortTitle) parsed.shortTitle = "Strategic Step";
  
     if (Array.isArray(parsed.updatedNodes)) {
       parsed.updatedNodes = parsed.updatedNodes.map((node: any, i: number) => ({

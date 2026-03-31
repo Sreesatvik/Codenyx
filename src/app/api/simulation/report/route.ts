@@ -44,7 +44,7 @@ ${JSON.stringify(state, null, 2)}
 `;
 
     const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
+      model: groq("llama-3.1-8b-instant"),
       system: systemPrompt,
       prompt: "Generate the final evaluation report based on the simulation data provided.",
     });

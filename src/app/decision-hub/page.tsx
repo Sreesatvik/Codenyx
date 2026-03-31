@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import AnimatedMap from "@/components/canvas/AnimatedMap";
 import FinalDashboard from "@/components/dashboard/FinalDashboard";
+import SidebarHistory from "@/components/layout/SidebarHistory";
 import { useSimulationStore } from "@/store/simulationStore";
 import gsap from "gsap";
 
-// --- Approach Logos (Dev 3) ---
+// --- Strategic Approaches (Strategic Approaches) ---
 const APPROACHES = [
   {
     id: "product",
@@ -114,7 +115,7 @@ export default function DecisionHub() {
   const {
     budget, metrics, turn, context, mapNodes, avatarPos,
     narrativeHistory, isEvaluating, isGameOver, lastTransaction,
-    runSimulationTurn, resetSimulation, loadFromDatabase,
+    runSimulationTurn, loadFromDatabase,
   } = useSimulationStore();
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export default function DecisionHub() {
   const budgetRef = useRef<HTMLParagraphElement>(null);
   const prevBudget = useRef(budget);
 
-  // Dev 5: GSAP animate budget when it changes
+  // Animate budget when it changes
   useEffect(() => {
     if (!budgetRef.current || prevBudget.current === budget) return;
     const obj = { val: prevBudget.current };
@@ -149,7 +150,7 @@ export default function DecisionHub() {
     if (isEvaluating) return;
     setActiveApproach(approach.id);
 
-    // GSAP ripple on click
+    // Ripple animation
     gsap.fromTo(
       `#approach-${approach.id}`,
       { scale: 0.95 },
@@ -167,147 +168,171 @@ export default function DecisionHub() {
     setActionInput("");
   };
 
-  const latestNarrative = narrativeHistory[narrativeHistory.length - 1] || "Awaiting your first strategic decision...";
+  const latestNarrative = narrativeHistory[narrativeHistory.length - 1] || "Awaiting your strategic move...";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="h-screen w-full flex bg-[#0f172a] text-slate-100 overflow-hidden">
+      
+      {/* ── LEFT SIDEBAR: ChatGPT History Log ── */}
+      <SidebarHistory />
 
-      {/* ── Header ── */}
-      <header className="flex justify-between items-center bg-slate-900/80 backdrop-blur border-b border-slate-800 px-8 py-5">
-        <div>
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
-            VentureSimulate <span className="text-slate-500 font-normal">| Turn {turn}</span>
-          </h1>
-          <p className="text-slate-400 text-sm mt-0.5">
-            {context?.domain || "No Domain"} · {context?.purpose?.slice(0, 60) || "No Purpose"}
-          </p>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="text-right">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-0.5">Available Budget</p>
-            <div className="relative">
-              <p ref={budgetRef} className="text-4xl font-mono font-bold text-emerald-400">
-                ${budget.toLocaleString()}
-              </p>
-              {lastTransaction && !isEvaluating && turn > 1 && (
-                <p className="text-[10px] font-mono mt-1 flex gap-2 justify-end animate-in fade-in slide-in-from-top-1 duration-500 absolute right-0 top-full">
-                  <span className="text-red-400">-{lastTransaction.cost} cost</span>
-                  <span className="text-emerald-400">+{lastTransaction.revenue} rev</span>
-                  <span className={`font-bold ${lastTransaction.net >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                    ({lastTransaction.net >= 0 ? '+' : ''}{lastTransaction.net} net)
-                  </span>
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={resetSimulation}
-            className="text-xs text-slate-500 hover:text-red-400 border border-slate-700 hover:border-red-500/50 px-3 py-1.5 rounded-lg transition-colors ml-4"
-          >
-            Reset
-          </button>
-        </div>
-      </header>
-
-      {/* ── Main Grid ── */}
-      <div className="flex flex-1 gap-0 overflow-hidden">
-
-        {/* Left: Metrics + Event Log */}
-        <aside className="w-72 flex-shrink-0 bg-slate-900/60 border-r border-slate-800 p-5 flex flex-col gap-5 overflow-y-auto">
+      {/* ── MAIN CONTENT AREA ── */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar relative bg-slate-950/20">
+        
+        {/* Top Floating Dashboard Header */}
+        <header className="sticky top-0 z-40 w-full bg-slate-900/60 backdrop-blur-xl border-b border-slate-800/80 px-8 py-5 flex justify-between items-center transition-all duration-300">
           <div>
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Core Metrics</h2>
-            <div className="space-y-4">
-              <MetricBar label="Social Impact" value={metrics.socialImpact} color="bg-blue-500" glow="shadow-blue-500/30" />
-              <MetricBar label="Financial Sustainability" value={metrics.financialSustainability} color="bg-emerald-500" glow="shadow-emerald-500/30" />
-              <MetricBar label="Risk Exposure" value={metrics.riskExposure} color="bg-red-500" glow="shadow-red-500/30" />
-              <MetricBar label="Stakeholder Trust" value={metrics.stakeholderTrust} color="bg-amber-500" glow="shadow-amber-500/30" />
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+              <h1 className="text-xl font-bold text-slate-100 tracking-tight">Active Simulation</h1>
             </div>
+            <p className="text-xs text-slate-400 font-medium">
+              {context?.domain || "Venture"} · {context?.purpose?.slice(0, 50)}...
+            </p>
           </div>
 
-          <div className="flex-1 flex flex-col min-h-0">
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Event Log</h2>
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {narrativeHistory.slice().reverse().map((entry, i) => (
-                <div key={i} className={`text-xs py-1.5 px-2 rounded border-l-2 ${i === 0 ? 'border-emerald-500 bg-emerald-950/30 text-slate-200' : 'border-slate-700 text-slate-400'}`}>
-                  {entry}
-                </div>
-              ))}
+          <div className="flex items-center gap-10">
+             {/* Turn Counter Widget */}
+             <div className="flex flex-col items-center">
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Current Turn</span>
+              <div className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
+                <span className="text-lg font-mono font-bold text-indigo-400">{turn}/8</span>
+              </div>
+            </div>
+
+            {/* Budget Widget */}
+            <div className="text-right flex flex-col items-end">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Operating Capital</p>
+              <div className="relative">
+                <p ref={budgetRef} className="text-3xl font-mono font-bold text-emerald-400 tabular-nums">
+                  ${budget.toLocaleString()}
+                </p>
+                {lastTransaction && !isEvaluating && turn > 1 && (
+                  <div className="absolute right-0 top-full pt-1.5 flex gap-2 animate-in fade-in slide-in-from-top-1">
+                    <span className="text-[9px] font-mono bg-red-400/10 text-red-400 px-1.5 py-0.5 rounded border border-red-400/20">-{lastTransaction.cost} cost</span>
+                    <span className="text-[9px] font-mono bg-emerald-400/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-400/20">+{lastTransaction.revenue} rev</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </aside>
+        </header>
 
-        {/* Right: Canvas + Controls */}
-        <main className="flex-1 flex flex-col p-5 gap-4 overflow-y-auto relative">
-
+        {/* Inner Content Grid */}
+        <div className="p-8 max-w-7xl mx-auto w-full flex flex-col gap-8 pb-32">
+          
           {isGameOver ? (
-            <div className="absolute inset-0 p-5 bg-slate-950 z-10 flex flex-col">
+            <div className="animate-in fade-in zoom-in-95 duration-700">
               <FinalDashboard />
             </div>
           ) : (
             <>
-              {/* Pure CSS Animated Isometric Map */}
-              <AnimatedMap 
-                nodes={mapNodes.map(n => ({ id: n.id, name: n.type.replace(/_/g, ' '), x: n.x, y: n.y }))} 
-                avatarPos={avatarPos} 
-              />
+              {/* Map + Metrics Layout */}
+              <div className="grid grid-cols-12 gap-8 items-start">
+                
+                {/* Left: Interactive Isometric Map */}
+                <div className="col-span-8 bg-slate-900/40 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative group">
+                   <div className="absolute top-6 left-6 z-10 px-3 py-1.5 bg-slate-950/60 backdrop-blur rounded-lg border border-slate-800/50">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Procedural Infrastructure</p>
+                   </div>
+                   <AnimatedMap 
+                    nodes={mapNodes.map(n => ({ id: n.id, name: n.type.replace(/_/g, ' '), x: n.x, y: n.y }))} 
+                    avatarPos={avatarPos} 
+                  />
+                </div>
 
-          {/* AI Narrative Box */}
-          <div className={`bg-slate-900/60 border rounded-xl p-4 transition-all duration-300 ${isEvaluating ? 'border-emerald-500/60 animate-pulse' : 'border-slate-800'}`}>
-            <p className="text-xs text-slate-500 uppercase tracking-widest mb-2 font-semibold">
-              {isEvaluating ? "⚙️ Consequence Engine Computing..." : "📋 Latest Consequence"}
-            </p>
-            <p className="text-slate-200 text-sm leading-relaxed">
-              {isEvaluating ? "Analyzing your decision and calculating all cascading consequences..." : latestNarrative}
-            </p>
-          </div>
+                {/* Right: Real-time Metrics Radar */}
+                <div className="col-span-4 flex flex-col gap-6">
+                  <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 shadow-xl">
+                    <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Simulation Vitals</h2>
+                    <div className="space-y-6">
+                      <MetricBar label="Social Impact" value={metrics.socialImpact} color="bg-blue-500" glow="shadow-blue-500/30" />
+                      <MetricBar label="Financial Sustainability" value={metrics.financialSustainability} color="bg-emerald-500" glow="shadow-emerald-500/30" />
+                      <MetricBar label="Risk Exposure" value={metrics.riskExposure} color="bg-red-500" glow="shadow-red-500/30" />
+                      <MetricBar label="Stakeholder Trust" value={metrics.stakeholderTrust} color="bg-amber-500" glow="shadow-amber-500/30" />
+                    </div>
+                  </div>
 
-          {/* ── Approach Logos (Dev 3) ── */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-            <p className="text-xs text-slate-500 uppercase tracking-widest mb-3 font-semibold">Strategic Approaches</p>
-            <div className="grid grid-cols-3 gap-3">
-              {APPROACHES.map((approach) => (
-                <button
-                  key={approach.id}
-                  id={`approach-${approach.id}`}
-                  onClick={() => handleApproachClick(approach)}
-                  disabled={isEvaluating}
-                  className={`
-                    flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-200
-                    bg-gradient-to-b ${approach.color} ${approach.border} ${approach.hover}
-                    disabled:opacity-40 disabled:cursor-not-allowed
-                    ${activeApproach === approach.id ? 'ring-2 ring-white/30 scale-95' : 'hover:scale-105 hover:shadow-lg'}
-                  `}
-                >
-                  <span className="text-2xl">{approach.emoji}</span>
-                  <span className="text-xs font-semibold text-white text-center leading-tight">{approach.label}</span>
-                  <span className="text-xs text-white/60 text-center">{approach.cost}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+                  {/* Sub-narrative or micro-updates could go here */}
+                  <div className="bg-gradient-to-br from-indigo-500/10 to-cyan-500/5 border border-indigo-500/20 rounded-2xl p-5">
+                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">Strategy Tip</p>
+                    <p className="text-xs text-slate-400 leading-relaxed italic">
+                      "Social impact builds trust, but trust alone won't fund your next center. Balance your mission with sustainable revenue streams."
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-          {/* Custom Action Input */}
-          <form onSubmit={handleCustomSubmit} className="flex gap-3">
-            <input
-              type="text"
-              value={actionInput}
-              onChange={(e) => setActionInput(e.target.value)}
-              disabled={isEvaluating}
-              placeholder='Or type a custom decision (e.g. "Hire a marketing consultant for $400")'
-              className="flex-1 bg-slate-800/60 border border-slate-700 rounded-lg px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
-            />
-            <button
-              type="submit"
-              disabled={isEvaluating || !actionInput.trim()}
-              className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-5 py-3 rounded-lg transition-colors text-sm whitespace-nowrap"
-            >
-              {isEvaluating ? "Evaluating..." : "Execute →"}
-            </button>
-          </form>
-          </>
+              {/* ── Decision Interface ── */}
+              <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                
+                {/* AI Consequence Box */}
+                <div className={`
+                   relative bg-slate-900/60 border rounded-2xl p-6 transition-all duration-300
+                   ${isEvaluating ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'border-slate-800 shadow-lg'}
+                `}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className={`w-1.5 h-1.5 rounded-full ${isEvaluating ? 'bg-emerald-400 animate-ping' : 'bg-slate-600'}`} />
+                    <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">
+                      {isEvaluating ? "Analyzing Cascading Impacts..." : "Consequence Feedback"}
+                    </p>
+                  </div>
+                  <p className={`text-slate-200 text-base leading-relaxed ${isEvaluating ? 'opacity-40 grayscale blur-[1px]' : ''}`}>
+                    {isEvaluating ? "The engine is processing your strategic decision across four dimensions..." : latestNarrative}
+                  </p>
+                </div>
+
+                {/* Strategic Approach Cards */}
+                <div className="grid grid-cols-3 gap-4">
+                  {APPROACHES.map((approach) => (
+                    <button
+                      key={approach.id}
+                      id={`approach-${approach.id}`}
+                      onClick={() => handleApproachClick(approach)}
+                      disabled={isEvaluating}
+                      className={`
+                        group relative flex flex-col items-center gap-2 p-5 rounded-3xl border transition-all duration-300
+                        bg-gradient-to-b ${approach.color} ${approach.border} shadow-lg
+                        disabled:opacity-20 disabled:cursor-not-allowed
+                        ${activeApproach === approach.id ? 'ring-2 ring-white/60 scale-[0.98]' : 'hover:scale-[1.03] hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10'}
+                      `}
+                    >
+                      <div className="w-12 h-12 flex items-center justify-center text-3xl bg-white/10 rounded-2xl mb-1 group-hover:scale-110 transition-transform">
+                        {approach.emoji}
+                      </div>
+                      <span className="text-xs font-bold text-white tracking-wide uppercase">{approach.label}</span>
+                      <span className="text-[10px] font-mono text-white/50">{approach.cost}</span>
+                      
+                      {/* Hover Overlay */}
+                      <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 rounded-3xl transition-opacity" />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Action Console */}
+                <form onSubmit={handleCustomSubmit} className="relative group">
+                  <input
+                    type="text"
+                    value={actionInput}
+                    onChange={(e) => setActionInput(e.target.value)}
+                    disabled={isEvaluating}
+                    placeholder='Draft a custom strategic mandate...'
+                    className="w-full bg-slate-900/80 border border-slate-800 rounded-2xl px-6 py-5 text-slate-100 text-sm placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50 transition-all border-l-4 border-l-emerald-500/40 shadow-xl"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isEvaluating || !actionInput.trim()}
+                    className="absolute right-3 top-2 bottom-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white font-bold px-8 rounded-xl transition-all text-xs uppercase tracking-widest shadow-lg flex items-center gap-2 hover:gap-3"
+                  >
+                    {isEvaluating ? "Processing" : "Execute"}
+                    {!isEvaluating && <span className="text-lg">→</span>}
+                  </button>
+                </form>
+              </div>
+            </>
           )}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
@@ -315,16 +340,18 @@ export default function DecisionHub() {
 // Internal MetricBar component
 function MetricBar({ label, value, color, glow }: { label: string; value: number; color: string; glow?: string }) {
   return (
-    <div>
-      <div className="flex justify-between mb-1.5">
-        <span className="text-xs font-medium text-slate-400">{label}</span>
-        <span className="text-xs font-mono text-slate-400">{value}/100</span>
+    <div className="group">
+      <div className="flex justify-between mb-2">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-300 transition-colors">{label}</span>
+        <span className="text-xs font-mono font-bold text-slate-400 tabular-nums">{value}/100</span>
       </div>
-      <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+      <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-slate-700/30">
         <div
-          className={`h-2 rounded-full ${color} shadow-sm ${glow || ''} transition-all duration-700 ease-out`}
+          className={`h-2 rounded-full ${color} ${glow || ''} transition-all duration-[1000ms] ease-out relative`}
           style={{ width: `${value}%` }}
-        />
+        >
+           <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
+        </div>
       </div>
     </div>
   );
