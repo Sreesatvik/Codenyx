@@ -112,16 +112,37 @@ Respond with ONLY the JSON. No other text.`;
       prompt: `User's strategic decision: "${action}"`,
     });
 
-    // Strip any accidental markdown code fences
-    const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    // --- Robust JSON Extraction ---
+    let cleaned = text.trim();
+    // 1. Find the first '{' and last '}'
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    }
 
     let parsed: any;
     try {
       parsed = JSON.parse(cleaned);
-      console.log("Groq returned JSON:", parsed);
     } catch {
-      console.error("Groq returned non-JSON:", cleaned);
-      return NextResponse.json({ error: "AI returned malformed JSON", raw: cleaned }, { status: 500 });
+      console.error("AI returned unparseable text:", text);
+      // Fallback: Return a safe default to keep the game playable
+      parsed = {
+        narrative: "The strategic impact of your decision is complex. Your team is still analyzing the full departmental consequences, but basic operations continue.",
+        shortTitle: "Strategic Shift",
+        budgetCost: 200,
+        revenue: 50,
+        metricShifts: {
+          socialImpact: 2,
+          financialSustainability: -2,
+          riskExposure: 1,
+          stakeholderTrust: 2
+        },
+        newNodes: [],
+        updatedNodes: [],
+        isGameEnding: false
+      };
     }
 
     const VALID_TYPES = ["HQ", "COMMUNITY_CENTER", "RESEARCH_LAB", "MARKETING_BILLBOARD", "PRODUCTION_FACILITY", "EMPTY"];
