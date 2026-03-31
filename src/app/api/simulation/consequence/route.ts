@@ -146,6 +146,7 @@ Respond with ONLY the JSON. No other text.`;
     }
 
     const VALID_TYPES = ["HQ", "COMMUNITY_CENTER", "RESEARCH_LAB", "MARKETING_BILLBOARD", "PRODUCTION_FACILITY", "EMPTY"];
+    const VALID_STATUSES = ["ACTIVE", "INACTIVE", "DAMAGED", "UPGRADING"];
     
     // Sanitize newNodes/updatedNodes — the LLM often omits required fields like id/status
     if (Array.isArray(parsed.newNodes)) {
@@ -153,8 +154,8 @@ Respond with ONLY the JSON. No other text.`;
         id: node.id || `node-${Date.now()}-${i}`,
         x: typeof node.x === "number" ? node.x : i + 1,
         y: typeof node.y === "number" ? node.y : i + 1,
-        type: (node.type && VALID_TYPES.includes(node.type)) ? node.type : "COMMUNITY_CENTER",
-        status: node.status || "ACTIVE",
+        type: (node.type && VALID_TYPES.includes(node.type.toUpperCase())) ? node.type.toUpperCase() : "COMMUNITY_CENTER",
+        status: (node.status && VALID_STATUSES.includes(node.status.toUpperCase())) ? node.status.toUpperCase() : "ACTIVE",
       }));
     }
     // Ensure revenue exists
@@ -167,8 +168,8 @@ Respond with ONLY the JSON. No other text.`;
         id: node.id || `node-upd-${Date.now()}-${i}`,
         x: typeof node.x === "number" ? node.x : 0,
         y: typeof node.y === "number" ? node.y : 0,
-        type: (node.type && VALID_TYPES.includes(node.type)) ? node.type : "HQ",
-        status: node.status || "ACTIVE",
+        type: (node.type && VALID_TYPES.includes(node.type.toUpperCase())) ? node.type.toUpperCase() : "HQ",
+        status: (node.status && VALID_STATUSES.includes(node.status.toUpperCase())) ? node.status.toUpperCase() : "ACTIVE",
       }));
     }
 
